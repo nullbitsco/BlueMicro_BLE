@@ -1,5 +1,5 @@
 /*
-Copyright 2018-2020 <Pierre Constantineau>
+Copyright 2020 <Jay Greco>
 
 3-Clause BSD License
 
@@ -17,45 +17,30 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#ifndef FIRMWARE_H
-#define FIRMWARE_H
-#undef min
-#undef max
-#include "firmware_config.h"
-#include "bluetooth_config.h"
-#include "KeyScanner.h"
-#include "keymap.h"
-#include "sleep.h"
-#include "bluetooth.h"
-#include "nrf52battery.h"
-#include "LedPwm.h"
-#include "LedRGB.h"
-#include "nrf52gpio.h"
-#include "datastructures.h"
-#include "debug_cli.h"
 #include "matrix.h"
 
-// need to add this to resolve an issue when linking.
-// see https://forum.arduino.cc/index.php?topic=319795.0
-namespace std {
-  void __throw_length_error(char const*) {
-  }
+void init_pins(void) {
+    // Set cols to outputs, low
+    for (uint8_t pin = 0; pin < MATRIX_MUX_COLS; pin++) {
+        pinMode(col_pins[pin], OUTPUT);
+    }
+    
+    // Unselect cols
+    for (uint8_t bit = 0; bit < MATRIX_MUX_COLS; bit++) {
+        digitalWrite(col_pins[bit], LOW);
+    }
+
+    // Set rows to input, pullup
+    for (uint8_t pin = 0; pin < MATRIX_ROWS; pin++) {
+        pinMode(row_pins[pin], INPUT_PULLUP);
+    }
 }
-    void setupConfig(void);
-    void setupMatrix(void);
-    void scanMatrix(void);
-    void sendKeyPresses(void);
 
-    void keyscantimer_callback(TimerHandle_t _handle);
-    void batterytimer_callback(TimerHandle_t _handle);
-    void RGBtimer_callback(TimerHandle_t _handle);
-    void addStringToQueue(const char* str);
-    void addKeycodeToQueue(const uint16_t keycode);
-    void addKeycodeToQueue(const uint16_t keycode, const uint8_t modifier);
-    void process_keyboard_function(uint16_t keycode);
-    #ifndef USER_MACRO_FUNCTION  
-    #define USER_MACRO_FUNCTION 1  
-    void process_user_macros(uint16_t macroid);
-    #endif
-
-#endif /* FIRMWARE_H */
+void select_col(uint8_t col)
+{
+    for (uint8_t bit = 0; bit < MATRIX_MUX_COLS; bit++) {
+        uint8_t state = (col & (0b1 << bit)) >> bit;
+        if (state)  digitalWrite(col_pins[bit], HIGH);
+        else        digitalWrite(col_pins[bit], LOW);
+    }
+}

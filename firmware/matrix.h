@@ -1,5 +1,5 @@
 /*
-Copyright 2018-2020 <Pierre Constantineau>
+Copyright 2020 <Jay Greco>
 
 3-Clause BSD License
 
@@ -17,45 +17,18 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#ifndef FIRMWARE_H
-#define FIRMWARE_H
-#undef min
-#undef max
+#ifndef MATRIX_H
+#define MATRIX_H
+
+#include <Arduino.h>
+#include "keyboard_config.h"
 #include "firmware_config.h"
-#include "bluetooth_config.h"
-#include "KeyScanner.h"
-#include "keymap.h"
-#include "sleep.h"
-#include "bluetooth.h"
-#include "nrf52battery.h"
-#include "LedPwm.h"
-#include "LedRGB.h"
-#include "nrf52gpio.h"
-#include "datastructures.h"
-#include "debug_cli.h"
-#include "matrix.h"
 
-// need to add this to resolve an issue when linking.
-// see https://forum.arduino.cc/index.php?topic=319795.0
-namespace std {
-  void __throw_length_error(char const*) {
-  }
-}
-    void setupConfig(void);
-    void setupMatrix(void);
-    void scanMatrix(void);
-    void sendKeyPresses(void);
+// Column pins
+const uint8_t row_pins[MATRIX_ROWS] = MATRIX_ROW_PINS;
+const uint8_t col_pins[MATRIX_MUX_COLS] = MATRIX_COL_MUX_PINS;
 
-    void keyscantimer_callback(TimerHandle_t _handle);
-    void batterytimer_callback(TimerHandle_t _handle);
-    void RGBtimer_callback(TimerHandle_t _handle);
-    void addStringToQueue(const char* str);
-    void addKeycodeToQueue(const uint16_t keycode);
-    void addKeycodeToQueue(const uint16_t keycode, const uint8_t modifier);
-    void process_keyboard_function(uint16_t keycode);
-    #ifndef USER_MACRO_FUNCTION  
-    #define USER_MACRO_FUNCTION 1  
-    void process_user_macros(uint16_t macroid);
-    #endif
+void init_pins(void);
+void select_col(uint8_t col);
 
-#endif /* FIRMWARE_H */
+#endif

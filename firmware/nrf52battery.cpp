@@ -117,7 +117,7 @@ uint8_t Battery::mvToPercent(uint32_t mvolts)
       }
       mvolts -= 3600;
       return (uint8_t) 10 + (uint8_t)((mvolts * 15)/100);  // thats mvolts /6.66666666
-    break;    
+    break;
   } 
 }
 /**************************************************************************************************************************/
@@ -137,7 +137,7 @@ void Battery::updateBattery(void)
         vbat_mv = vbat_vdd;
     break;
     case BATT_LIPO:
-        vbat_raw = readVBAT();                                // Get a raw ADC reading
+        vbat_raw = readVBAT();  // Get a raw ADC reading
                 // Convert the raw value to compensated mv, taking the resistor-
                 // divider into account (providing the actual LIPO voltage)
                 // ADC range is 0..3000mV and resolution is 12-bit (0..4095),
@@ -146,8 +146,8 @@ void Battery::updateBattery(void)
     break;
   }
     
-  vbat_per = mvToPercent(vbat_mv);       // Convert from raw mv to percentage (based on LIPO chemistry)
-  blebas.notify(vbat_per);                                  // update the Battery Service.  Use notify instead of write to ensure that subscribers receive the new value.
+  vbat_per = mvToPercent(vbat_mv); // Convert from raw mv to percentage (based on LIPO chemistry)
+  blebas.notify(vbat_per);  // update the Battery Service.  Use notify instead of write to ensure that subscribers receive the new value.
 }
 /**************************************************************************************************************************/
 

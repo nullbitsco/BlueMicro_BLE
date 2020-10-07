@@ -123,7 +123,7 @@ Function Compile-Board($keyboard, $target, $keymap, $fqbn, $hardware) {
     if ($Debug) 
     {$cmdDebug = "l1"} 
     else
-    {$cmdDebug = "l0"}
+    {$cmdDebug = "l2"}
 
     if ($fqbn -eq "feather52832") 
     {$cmdfqbn = "s132v6"} 
@@ -134,7 +134,7 @@ Function Compile-Board($keyboard, $target, $keymap, $fqbn, $hardware) {
     # Run compile
 
     $cmdCompile = 
-        '& "$BuilderExe" -compile -logger=machine -warnings "none" -verbose -ide-version "10807" -debug-level 1 ' + 
+        '& "$BuilderExe" -compile -logger=machine -warnings "none" -verbose -ide-version "10807" -debug-level 3 ' + 
         '-hardware "$ArduinoDir\hardware" -hardware "$ArduinoDataDir\packages" ' + 
         '-tools "$ArduinoDir\tools-builder" -tools "$ArduinoDir\hardware\tools\avr" -tools "$ArduinoDataDir\packages" ' +
         '-built-in-libraries "$ArduinoDir\libraries" ' +

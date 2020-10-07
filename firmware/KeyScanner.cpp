@@ -36,7 +36,7 @@ KeyScanner::KeyScanner() {    // Constructor
 /**************************************************************************************************************************/
 // KEY SCANNING - THIS ROUTINE ONLY TAKES CARE OF THE DEBOUNCING LOGIC FOR EACH KEY
 /**************************************************************************************************************************/
-bool KeyScanner::scanMatrix(const int& currentState,unsigned long currentMillis, const int& row, const int& col)
+bool KeyScanner::scanMatrix(const int& currentState, unsigned long currentMillis, const int& row, const int& col)
 {
     // 
 #if DIODE_DIRECTION == COL2ROW

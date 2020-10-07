@@ -27,7 +27,8 @@ using namespace Adafruit_LittleFS_Namespace;
 /**************************************************************************************************************************/
 // Keyboard Matrix
 byte rows[] MATRIX_ROW_PINS;        // Contains the GPIO Pin Numbers defined in keyboard_config.h
-byte columns[] MATRIX_COL_PINS;     // Contains the GPIO Pin Numbers defined in keyboard_config.h  
+byte columns[] MATRIX_COL_PINS;     // Contains the GPIO Pin Numbers defined in keyboard_config.h 
+
 //uint32_t lastupdatetime =0;
 SoftwareTimer keyscantimer, batterytimer;
 
@@ -63,11 +64,11 @@ void setup() {
  setupConfig();
 
  Serial.begin(115200);
- // while ( !Serial ) delay(10);   // for nrf52840 with native usb this makes the nrf52840 stall and wait for a serial connection.  Something not wanted for a keyboard...
+  // while ( !Serial ) delay(10);   // for nrf52840 with native usb this makes the nrf52840 stall and wait for a serial connection.  Something not wanted for a keyboard...
 
   LOG_LV1("BLEMIC","Starting %s" ,DEVICE_NAME);
 
-  setupGpio();                                                                // checks that NFC functions on GPIOs are disabled.
+  setupGpio(); // checks that NFC functions on GPIOs are disabled.
   if(keyboardconfig.VCCSwitchAvailable)
   {
     switchVCC(keyboardconfig.VCCSwitchEnabled); // turn on VCC when starting up if needed.
@@ -92,95 +93,45 @@ void setup() {
   startAdv(); 
   keyscantimer.start();
   batterytimer.start();
-  //suspendLoop(); // this commands suspends the main loop.  We are no longer using the loop but scheduling things using the timers.
+  batterymonitor.updateBattery(); //update once
   stringbuffer.clear();
 };
 /**************************************************************************************************************************/
 //
 /**************************************************************************************************************************/
 void setupMatrix(void) {
-    //inits all the columns as INPUT
-   for (const auto& column : columns) {
-      LOG_LV2("BLEMIC","Setting to INPUT Column: %i" ,column);
-      pinMode(column, INPUT);
-    }
-
-   //inits all the rows as INPUT_PULLUP
-   for (const auto& row : rows) {
-      LOG_LV2("BLEMIC","Setting to INPUT_PULLUP Row: %i" ,row);
-      pinMode(row, INPUT_PULLUP);
-    }
+    // Set columns using the demux --> output
+    init_pins();
 };
-/**************************************************************************************************************************/
-// Keyboard Scanning
-/**************************************************************************************************************************/
 
-#if DIODE_DIRECTION == COL2ROW
-#define writeRow(r) digitalWrite(r,LOW)
-#define modeCol(c) pinMode(c, INPUT_PULLUP)
-#ifdef NRF52840_XXAA
-#define gpioIn (((uint64_t)(NRF_P1->IN)^0xffffffff)<<32)|(NRF_P0->IN)^0xffffffff
-#else
-#define gpioIn (NRF_GPIO->IN)^0xffffffff
-#endif
-#else
-#define writeRow(r) digitalWrite(r,HIGH)
-#define modeCol(c) pinMode(c, INPUT_PULLDOWN)
-#ifdef NRF52840_XXAA
-#define gpioIn (((uint64_t)NRF_P1->IN)<<32)|(NRF_P0->IN)
-#else
-#define gpioIn NRF_GPIO->IN
-#endif
-#endif
-#ifdef NRF52840_XXAA
-#define PINDATATYPE uint64_t
-#else
-#define PINDATATYPE uint32_t
-#endif
 /**************************************************************************************************************************/
 // Better scanning with debounce Keyboard Scanning
 /**************************************************************************************************************************/
 void scanMatrix() {
-
+    uint32_t pindata0 = 0;
+    uint32_t pindata1 = 0;
     keyboardstate.timestamp  = millis();   // lets call it once per scan instead of once per key in the matrix
-    //take care when selecting debouncetime - each row has a delay of 1ms inbetween - so if you have 5 rows, setting debouncetime to 2 is at least 5ms...
-    
-    static PINDATATYPE pindata[MATRIX_ROWS][DEBOUNCETIME];
 
-    static uint8_t head = 0; // points us to the head of the debounce array;
+    //Set col, read rows
+    for (uint8_t current_col = 0; current_col < MATRIX_COLS; current_col++) {
+        select_col(current_col);
+        nrfx_coredep_delay_us(5);
 
-    for (int i = 0; i < MATRIX_COLS; ++i){
-        modeCol(columns[i]);
-    }
+        // Read each row sequentially
+        pindata0 = NRF_P0->IN;
+        pindata1 = NRF_P1->IN;
 
-    for (int j = 0; j < MATRIX_ROWS; ++j){
-        // set the current row as OUPUT and LOW
-        PINDATATYPE pinreg = 0;
-
-        pinMode(rows[j], OUTPUT);
-        writeRow(rows[j]);
-
-        nrfx_coredep_delay_us(1);   // need for the GPIO lines to settle down electrically before reading.
-        pindata[j][head] = gpioIn;  // press is active high regardless of diode dir
-
-        //debounce happens here - we want to press a button as soon as possible, and release it only when all bounce has left
-        for (int d = 0; d < DEBOUNCETIME; ++d)
-            pinreg |= pindata[j][d];
-        
-        for (int i = 0; i < MATRIX_COLS; ++i){
-            int ulPin = g_ADigitalPinMap[columns[i]]; 
-            if((pinreg>>ulPin)&1)  KeyScanner::press(keyboardstate.timestamp, j, i);
-            else                   KeyScanner::release(keyboardstate.timestamp, j, i);
+        for(uint8_t row_index = 0; row_index < MATRIX_ROWS; row_index++)
+        {
+            int ulPin = g_ADigitalPinMap[row_pins[row_index]];
+            if (ulPin<32) {
+                KeyScanner::scanMatrix((pindata0>>(ulPin))&1, keyboardstate.timestamp, row_index, current_col);
+            } else {
+                KeyScanner::scanMatrix((pindata1>>(ulPin-32))&1, keyboardstate.timestamp, row_index, current_col);
+            }
         }
 
-        pinMode(rows[j], INPUT);                                                   // 'disables' the row that was just scanned
     }
-    for (int i = 0; i < MATRIX_COLS; ++i) {                             //Scanning done, disabling all columns
-        pinMode(columns[i], INPUT);                                     
-    }
-
-    head++;
-    if(head >= DEBOUNCETIME) head = 0; // reset head to 0 when we reach the end of our buffer
 }
 
 
@@ -636,7 +587,7 @@ void loop() {
 // keyscantimer is being called instead
 /**************************************************************************************************************************/
 void keyscantimer_callback(TimerHandle_t _handle) {
-    #if MATRIX_SCAN == 1
+  #if MATRIX_SCAN == 1
     scanMatrix();
   #endif
   #if SEND_KEYS == 1
@@ -651,7 +602,7 @@ void keyscantimer_callback(TimerHandle_t _handle) {
   #if BLE_CENTRAL == 1  
     if ((timesincelastkeypress<10)&&(!Bluefruit.Central.connected()&&(!Bluefruit.Scanner.isRunning())))
     {
-      Bluefruit.Scanner.start(0);                                             // 0 = Don't stop scanning after 0 seconds  ();
+      Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after 0 seconds  ();
     }
   #endif
 
@@ -671,7 +622,8 @@ void keyscantimer_callback(TimerHandle_t _handle) {
 //********************************************************************************************//
 void batterytimer_callback(TimerHandle_t _handle)
 { 
-      batterymonitor.updateBattery();
+    LOG_LV1("BLEMIC", "Battery update");
+    batterymonitor.updateBattery();
 }
 
 

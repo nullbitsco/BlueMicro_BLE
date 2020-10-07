@@ -427,13 +427,15 @@ void set_keyboard_led(uint16_t conn_handle, uint8_t led_bitmap)
   (void) conn_handle;
   // light up Red Led if any bits is set
   // RED LED is on P0.17 and is not being used on the standard BlueMicro
-  if ( led_bitmap )
+  if ( led_bitmap & 0x02 )
   {
-    ledOn( LED_RED );
+    pinMode(15, OUTPUT); //turn LED off
+    digitalWrite(15, HIGH); //turn LED on
   }
   else
   {
-    ledOff( LED_RED );
+    pinMode(15, OUTPUT); //turn LED off
+    digitalWrite(15, LOW); //turn LED on
   }
 }
 /**************************************************************************************************************************/

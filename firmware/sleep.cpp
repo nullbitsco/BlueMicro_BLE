@@ -19,31 +19,21 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 */
 #include "sleep.h"
 #include "LedRGB.h"
+#include "matrix.h"
 /**************************************************************************************************************************/
 // Prepare sense pins for waking up from complete shutdown
 /**************************************************************************************************************************/
 void setupWakeUp() {
-  for(int j = 0; j < MATRIX_ROWS; ++j) {                             
-    //set the current row as OUPUT and LOW
-    pinMode(rows[j], OUTPUT);
-    #if DIODE_DIRECTION == COL2ROW                                         
-    digitalWrite(rows[j], LOW);                                       // 'enables' a specific row to be "low" 
-    #else
-    digitalWrite(rows[j], HIGH);                                       // 'enables' a specific row to be "HIGH"
-    #endif
-  }
-  //loops thru all of the columns
-  for (int i = 0; i < MATRIX_COLS; ++i) {
-      #if DIODE_DIRECTION == COL2ROW                                         
-        pinMode(columns[i], INPUT_PULLUP_SENSE);              // 'enables' the column High Value on the diode; becomes "LOW" when pressed - Sense makes it wake up when sleeping
-      #else
-        pinMode(columns[i], INPUT_PULLDOWN_SENSE);            // 'enables' the column High Value on the diode; becomes "LOW" when pressed - Sense makes it wake up when sleeping
-      #endif
+  select_col(1); //esc key on this one
+
+  //sets READ IN gpios (any gpio that is an INPUT in the matrix)
+  for(uint8_t row_index = 0; row_index < MATRIX_ROWS; row_index++) {
+    pinMode(row_pins[row_index], INPUT_PULLUP_SENSE);  // 'enables' the column High Value on the diode; becomes "LOW" when pressed - Sense makes it wake up when sleeping
   }
 
-      #if VCC_ENABLE_GPIO ==1 
-      switchVCC(false); // turn off VCC when going to sleep. This isn't an optional thing...
-      #endif
+  #if VCC_ENABLE_GPIO == 1 
+  switchVCC(false); // turn off VCC when going to sleep. This isn't an optional thing...
+  #endif
 }
 
 /**************************************************************************************************************************/
@@ -53,6 +43,8 @@ void gotoSleep(unsigned long timesincelastkeypress,bool connected)
   if ((timesincelastkeypress>SLEEPING_DELAY)&&(!connected))
   {
     LOG_LV2("SLEEP","Not Connected Sleep %i", timesincelastkeypress);
+    pinMode(15, INPUT); //turn LED off
+
     #if WS2812B_LED_ON == 1 
     suspendRGB();
     #endif
@@ -63,6 +55,8 @@ void gotoSleep(unsigned long timesincelastkeypress,bool connected)
   // shutdown when unconnected and no keypresses for SLEEPING_DELAY_CONNECTED ms
   if ((timesincelastkeypress>SLEEPING_DELAY_CONNECTED)&&(connected))
   {
+    pinMode(15, INPUT); //turn LED off
+
     LOG_LV2("SLEEP","Connected Sleep %i", timesincelastkeypress);
     #if WS2812B_LED_ON == 1 
     suspendRGB();

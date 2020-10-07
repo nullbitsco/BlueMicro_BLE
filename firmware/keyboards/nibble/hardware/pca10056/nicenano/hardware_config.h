@@ -1,5 +1,5 @@
 /*
-Copyright 2018-2020 <Pierre Constantineau>
+Copyright 2020 <Pierre Constantineau>
 
 3-Clause BSD License
 
@@ -15,47 +15,57 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
 LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 */
-#ifndef FIRMWARE_H
-#define FIRMWARE_H
-#undef min
-#undef max
-#include "firmware_config.h"
-#include "bluetooth_config.h"
-#include "KeyScanner.h"
-#include "keymap.h"
-#include "sleep.h"
-#include "bluetooth.h"
-#include "nrf52battery.h"
-#include "LedPwm.h"
-#include "LedRGB.h"
-#include "nrf52gpio.h"
-#include "datastructures.h"
-#include "debug_cli.h"
-#include "matrix.h"
+#ifndef HARDWARE_CONFIG_H
+#define HARDWARE_CONFIG_H
+#include "hardware_variants.h"
 
-// need to add this to resolve an issue when linking.
-// see https://forum.arduino.cc/index.php?topic=319795.0
-namespace std {
-  void __throw_length_error(char const*) {
-  }
-}
-    void setupConfig(void);
-    void setupMatrix(void);
-    void scanMatrix(void);
-    void sendKeyPresses(void);
+// Lazy translation: Bit-C --> n!n pins
+#define D3      6  //0.06
+#define D2      8  //0.08
+#define D1      17 //0.17
+#define D0      26 //0.20
+#define D4      22 //0.22
+#define C6      24 //0.24
+#define D7      32 //1.00
+#define E6      11 //0.11
+#define B4      36 //1.04
+#define B5      38 //1.06
 
-    void keyscantimer_callback(TimerHandle_t _handle);
-    void batterytimer_callback(TimerHandle_t _handle);
-    void RGBtimer_callback(TimerHandle_t _handle);
-    void addStringToQueue(const char* str);
-    void addKeycodeToQueue(const uint16_t keycode);
-    void addKeycodeToQueue(const uint16_t keycode, const uint8_t modifier);
-    void process_keyboard_function(uint16_t keycode);
-    #ifndef USER_MACRO_FUNCTION  
-    #define USER_MACRO_FUNCTION 1  
-    void process_user_macros(uint16_t macroid);
-    #endif
+#define F4      31 //0.31
+#define F5      29 //0.29
+#define F6      2  //0.02
+#define F7      47 //1.15
+#define B1      45 //1.13
+#define B3      43 //1.11
+#define B2      10 //0.10
+#define B6      9  //0.09 
 
-#endif /* FIRMWARE_H */
+/* HARDWARE DEFINITION*/
+/* key matrix size */
+#define MATRIX_ROWS 5
+#define MATRIX_COLS 16
+#define MATRIX_MUX_COLS 4
+#define DEBOUNCETIME 2
+
+/*
+ * Keyboard Matrix Assignments
+ * The nibble uses a demultiplexer for the cols.
+ * to free up more IOs for awesomeness!
+ * See matrix.c for more details.
+*/
+#define MATRIX_ROW_PINS { B1, B3, B2, B6, D4 }
+#define MATRIX_COL_MUX_PINS { F4, F5, F6, F7 }
+#define MATRIX_COL_PINS { }
+#define UNUSED_PINS {}
+
+/* COL2ROW or ROW2COL */
+#define DIODE_DIRECTION COL2ROW
+
+#define BATTERY_TYPE BATT_LIPO
+#define VBAT_PIN  4
+#define VCC_PIN 13
+#define VCC_POLARITY_ON 0
+
+#endif
+// HARDWARE_CONFIG_H 
