@@ -24,11 +24,13 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 // Prepare sense pins for waking up from complete shutdown
 /**************************************************************************************************************************/
 void setupWakeUp() {
-  select_col(1); //esc key on this one
+  select_col(15); //Uppermost right pin is the wakeup pin.
+
+  pinMode(rows[0], INPUT_PULLUP_SENSE);
 
   //sets READ IN gpios (any gpio that is an INPUT in the matrix)
-  for(uint8_t row_index = 0; row_index < MATRIX_ROWS; row_index++) {
-    pinMode(row_pins[row_index], INPUT_PULLUP_SENSE);  // 'enables' the column High Value on the diode; becomes "LOW" when pressed - Sense makes it wake up when sleeping
+  for(uint8_t row_index = 1; row_index < MATRIX_ROWS; row_index++) {
+    pinMode(rows[row_index], INPUT);  // Set the rest of the pins to input, no PU
   }
 
   #if VCC_ENABLE_GPIO == 1 
@@ -37,10 +39,10 @@ void setupWakeUp() {
 }
 
 /**************************************************************************************************************************/
-void gotoSleep(unsigned long timesincelastkeypress,bool connected)
+void gotoSleep(unsigned long timesincelastkeypress, bool connected)
 {
   // shutdown when unconnected and no keypresses for SLEEPING_DELAY ms
-  if ((timesincelastkeypress>SLEEPING_DELAY)&&(!connected))
+  if ((timesincelastkeypress >= SLEEPING_DELAY) && (!connected))
   {
     LOG_LV2("SLEEP","Not Connected Sleep %i", timesincelastkeypress);
     pinMode(15, INPUT); //turn LED off
@@ -49,11 +51,12 @@ void gotoSleep(unsigned long timesincelastkeypress,bool connected)
     suspendRGB();
     #endif
     setupWakeUp();
+    delay(1000);
     sd_power_system_off();
   } 
 
   // shutdown when unconnected and no keypresses for SLEEPING_DELAY_CONNECTED ms
-  if ((timesincelastkeypress>SLEEPING_DELAY_CONNECTED)&&(connected))
+  if ((timesincelastkeypress >= SLEEPING_DELAY_CONNECTED) && (connected))
   {
     pinMode(15, INPUT); //turn LED off
 
